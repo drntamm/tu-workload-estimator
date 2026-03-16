@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Tuskegee University ODEOL Course Workload Estimator — Carnegie Unit compliant time-on-task calculator for faculty.">
+<title>Course Workload Estimator | Tuskegee University ODEOL</title>
+<style>
+/* ─── TOKENS ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cr:#7b0707; --crd:#5a0505; --gd:#f2bd2c; --gdl:#fdf6dc;
+  --bg:#f4f4f4; --sfc:#fff; --bdr:#dedede; --tx:#1a1a1a; --mu:#5e5e5e;
+  --ok-bg:#d4edda; --ok-tx:#155724; --ok-bd:#b8dfc8;
+  --lo-bg:#fde8e8; --lo-tx:#7a1414; --lo-bd:#f5c6c6;
+  --hi-bg:#fff3cd; --hi-tx:#7a4a00; --hi-bd:#ffc107;
+  --r:5px;
+}
+body { font-family: Arial, Helvetica, sans-serif; font-size:14px; color:var(--tx); background:var(--bg); }
+
+/* ─── LAYOUT ── */
+.wrap { max-width:920px; margin:0 auto; background:var(--sfc); box-shadow:0 2px 20px rgba(0,0,0,.13); }
+
+/* ─── HEADER ── */
+.hdr { background:var(--cr); color:#fff; border-bottom:5px solid var(--gd); }
+.hdr-inner { display:flex; align-items:center; gap:16px; padding:18px 30px 14px; }
+.logo { width:54px; height:54px; border-radius:50%; flex-shrink:0; background:var(--gd);
+  display:flex; align-items:center; justify-content:center;
+  font-family:Georgia,serif; font-size:18px; font-weight:700; color:var(--cr); }
+.hdr-text h1 { font-family:Georgia,serif; font-size:21px; font-weight:700; line-height:1.25; }
+.hdr-text p  { font-size:12px; color:rgba(255,255,255,.78); margin-top:3px; }
+.hdr-strip { background:rgba(0,0,0,.2); padding:5px 30px; font-size:10.5px;
+  color:rgba(255,255,255,.65); letter-spacing:.35px; display:flex; flex-wrap:wrap; gap:0 18px; }
+
+/* ─── BODY ── */
+.body { padding:26px 30px; background:var(--bg); }
+
+/* ─── INFO BOX ── */
+.info { background:var(--gdl); border:1px solid var(--gd); border-left:4px solid var(--gd);
+  border-radius:var(--r); padding:12px 16px; font-size:13px; color:#5a4200;
+  margin-bottom:24px; line-height:1.7; }
+.info strong { color:var(--cr); }
+
+/* ─── SECTION HEAD ── */
+.sh { font-family:Georgia,serif; font-size:11.5px; font-weight:700; text-transform:uppercase;
+  letter-spacing:1px; color:var(--cr); margin-bottom:13px; padding-bottom:5px;
+  border-bottom:2px solid var(--gd); }
+
+/* ─── COURSE GRID ── */
+.cgrid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:26px; }
+@media(max-width:620px){ .cgrid{ grid-template-columns:1fr 1fr; } }
+@media(max-width:420px){ .cgrid{ grid-template-columns:1fr; } }
+.f { display:flex; flex-direction:column; gap:5px; }
+.f label { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--mu); }
+.f input,.f select { border:1px solid var(--bdr); border-radius:var(--r);
+  padding:7px 10px; font-size:13px; background:#fff; color:var(--tx); width:100%; }
+.f input:focus,.f select:focus { outline:none; border-color:var(--cr); box-shadow:0 0 0 2px rgba(123,7,7,.1); }
+
+/* ─── TABS ── */
+.tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+.tab { padding:5px 14px; font-size:12px; border-radius:var(--r); border:1px solid var(--bdr);
+  background:#fff; cursor:pointer; color:#555; transition:all .12s; }
+.tab:hover { border-color:var(--cr); color:var(--cr); }
+.tab.on { background:var(--cr); border-color:var(--cr); color:#fff; }
+.panel { display:none; } .panel.on { display:block; }
+
+/* ─── ACTIVITY CARDS ── */
+.ac { background:#fff; border:1px solid var(--bdr); border-radius:6px; padding:13px 15px; margin-bottom:9px; }
+.ac-hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.ac-title { font-size:13px; font-weight:700; color:var(--cr); }
+.xbtn { background:none; border:none; cursor:pointer; color:#ccc; font-size:18px; line-height:1; transition:color .1s; }
+.xbtn:hover { color:#c00; }
+.aff { display:grid; grid-template-columns:repeat(auto-fit,minmax(115px,1fr)); gap:8px; align-items:end; }
+.aff .f label { font-size:9.5px; }
+.aff .f input,.aff .f select { font-size:12px; padding:5px 8px; }
+.ac-est { margin-top:8px; text-align:right; font-size:12px; color:var(--mu);
+  border-top:1px dashed #eee; padding-top:7px; }
+.ac-est strong { color:var(--cr); }
+.addbtn { width:100%; background:none; border:1px dashed #ccc; border-radius:var(--r);
+  padding:7px; font-size:12px; cursor:pointer; color:#888; margin-top:2px; transition:all .12s; }
+.addbtn:hover { border-color:var(--cr); color:var(--cr); }
+
+/* ─── RESULTS ── */
+.rcard { background:#fff; border:1px solid var(--bdr); border-radius:7px; overflow:hidden; margin-bottom:24px; }
+.rcard-hd { background:var(--cr); color:#fff; padding:11px 18px; font-family:Georgia,serif; font-size:15px; font-weight:700; }
+.rcard-body { padding:18px; }
+.mrow { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
+.mc { background:var(--bg); border-radius:var(--r); padding:13px 10px; text-align:center; }
+.mv { font-family:Georgia,serif; font-size:27px; font-weight:700; color:var(--cr); }
+.ml { font-size:11px; color:var(--mu); margin-top:3px; line-height:1.4; }
+.gt { background:#e6e6e6; border-radius:6px; height:12px; overflow:hidden; }
+.gf { height:100%; border-radius:6px; transition:width .45s ease,background .3s; }
+.gtx { display:flex; justify-content:space-between; font-size:10px; color:#999; margin-top:4px; margin-bottom:14px; }
+.st { border-radius:var(--r); padding:10px 14px; font-size:13px; font-weight:500;
+  text-align:center; line-height:1.55; margin-bottom:14px; }
+.st-idle { background:#f0f0f0; color:#888; border:1px solid #ddd; }
+.st-lo   { background:var(--lo-bg); color:var(--lo-tx); border:1px solid var(--lo-bd); }
+.st-ok   { background:var(--ok-bg); color:var(--ok-tx); border:1px solid var(--ok-bd); }
+.st-hi   { background:var(--hi-bg); color:var(--hi-tx); border:1px solid var(--hi-bd); }
+.bd-lbl  { font-size:12px; font-weight:600; color:var(--mu); margin-bottom:8px; }
+.bdr-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; font-size:12px; }
+.bdr-nm  { min-width:140px; color:#555; }
+.bdr-tw  { flex:1; background:#eee; border-radius:3px; height:8px; overflow:hidden; }
+.bdr-bf  { height:100%; background:var(--cr); border-radius:3px; transition:width .35s; }
+.bdr-vl  { min-width:55px; text-align:right; font-weight:700; }
+.wbox { border-top:1px solid #eee; padding-top:14px; margin-top:14px; }
+.wlbl { font-size:12px; color:var(--mu); margin-bottom:8px; font-style:italic; }
+.wr   { display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px; }
+.wv   { font-weight:700; color:var(--cr); }
+
+/* ─── DOWNLOAD BTN ── */
+.dlwrap { text-align:center; margin-bottom:26px; }
+.dlbtn { display:inline-flex; align-items:center; gap:9px; background:var(--cr); color:#fff;
+  border:none; border-radius:var(--r); padding:13px 34px; font-size:14px; font-weight:700;
+  cursor:pointer; letter-spacing:.3px; transition:background .15s; }
+.dlbtn:hover { background:var(--crd); }
+.dlbtn svg { width:17px; height:17px; fill:#fff; flex-shrink:0; }
+.dlsub { font-size:11px; color:var(--mu); margin-top:7px; }
+
+/* ─── FOOTER ── */
+.ftr { background:var(--cr); border-top:4px solid var(--gd); color:rgba(255,255,255,.65);
+  font-size:10.5px; text-align:center; padding:13px 24px; line-height:1.9; }
+.ftr a { color:var(--gd); text-decoration:none; }
+
+/* ═══════════════════════════════════════════════════════
+   PRINT / PDF STYLES
+   When user clicks "Print Audit", the browser opens the
+   print dialog. Saving as PDF produces a branded report.
+   The #print-audit div is hidden on screen but shown when
+   printing; the normal app UI is hidden when printing.
+═══════════════════════════════════════════════════════ */
+#print-audit { display:none; }
+
+@media print {
+  /* hide everything except the audit sheet */
+  body { background:#fff !important; }
+  .wrap, .hdr, .body, .ftr, #print-audit { box-shadow:none !important; }
+  .hdr, .body, .ftr { display:none !important; }
+  #print-audit { display:block !important; }
+
+  /* reset page */
+  @page { margin:15mm 14mm; size:letter portrait; }
+
+  /* ── audit typography ── */
+  .pa-body { font-family:Arial,Helvetica,sans-serif; font-size:9.5pt; color:#1a1a1a; line-height:1.5; }
+
+  /* ── audit header bar ── */
+  .pa-hdr { background:#7b0707 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    color:#fff; padding:10pt 14pt 8pt; margin-bottom:0; }
+  .pa-hdr-inner { display:flex; align-items:center; gap:12pt; }
+  .pa-logo { width:38pt; height:38pt; border-radius:50%; background:#f2bd2c !important;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    display:flex; align-items:center; justify-content:center;
+    font-family:Georgia,serif; font-size:13pt; font-weight:700; color:#7b0707; flex-shrink:0; }
+  .pa-hdr h1 { font-family:Georgia,serif; font-size:14pt; font-weight:700; margin-bottom:2pt; }
+  .pa-hdr p  { font-size:7.5pt; color:rgba(255,255,255,.8); }
+  .pa-gold-bar { height:4pt; background:#f2bd2c !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; margin-bottom:12pt; }
+
+  /* ── section heads ── */
+  .pa-sh { font-family:Georgia,serif; font-size:8.5pt; font-weight:700; text-transform:uppercase;
+    letter-spacing:.8pt; color:#7b0707; border-bottom:1.5pt solid #f2bd2c;
+    padding-bottom:3pt; margin:12pt 0 7pt; page-break-after:avoid; }
+
+  /* ── key-value rows ── */
+  .pa-kv { display:flex; gap:6pt; margin-bottom:3.5pt; font-size:9pt; }
+  .pa-kv .k { min-width:120pt; color:#666; }
+  .pa-kv .v { font-weight:700; color:#1a1a1a; }
+
+  /* ── compliance box ── */
+  .pa-compliance { border-left:4pt solid #7b0707; padding:7pt 10pt;
+    margin-bottom:10pt; page-break-inside:avoid; }
+  .pa-compliance.ok  { background:#d4edda !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-color:#155724; }
+  .pa-compliance.lo  { background:#fde8e8 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-color:#7a1414; }
+  .pa-compliance.hi  { background:#fff3cd !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-color:#7a4a00; }
+  .pa-compliance.idle{ background:#f0f0f0 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-color:#999; }
+  .pa-compliance .status-lbl { font-size:11pt; font-weight:700; margin-bottom:4pt; }
+  .pa-compliance .status-detail { font-size:8.5pt; }
+
+  /* ── gauge bar ── */
+  .pa-gauge-wrap { margin:8pt 0 4pt; }
+  .pa-gauge-track { height:8pt; background:#e0e0e0 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-radius:4pt; overflow:hidden; }
+  .pa-gauge-fill  { height:100%; border-radius:4pt; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .pa-gauge-ticks { display:flex; justify-content:space-between; font-size:7pt; color:#999; margin-top:2pt; }
+
+  /* ── activity table ── */
+  .pa-table { width:100%; border-collapse:collapse; font-size:8.5pt; margin-bottom:10pt; page-break-inside:auto; }
+  .pa-table thead tr { background:#7b0707 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; color:#fff; }
+  .pa-table thead th { padding:4pt 6pt; text-align:left; font-weight:700; }
+  .pa-table thead th:last-child { text-align:right; }
+  .pa-table tbody tr:nth-child(even) { background:#f9f5f5 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .pa-table tbody td { padding:3.5pt 6pt; border-bottom:.5pt solid #eee; vertical-align:top; }
+  .pa-table tbody td:last-child { text-align:right; font-weight:700; color:#7b0707; }
+  .pa-table tfoot tr { background:#7b0707 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; color:#fff; }
+  .pa-table tfoot td { padding:4pt 6pt; font-weight:700; }
+  .pa-table tfoot td:last-child { text-align:right; }
+
+  /* ── weekly bars ── */
+  .pa-bar-row { display:flex; align-items:center; gap:8pt; margin-bottom:6pt; font-size:8.5pt; }
+  .pa-bar-lbl { min-width:110pt; color:#555; }
+  .pa-bar-track { flex:1; background:#e0e0e0 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; height:8pt; border-radius:3pt; overflow:hidden; }
+  .pa-bar-fill  { height:100%; border-radius:3pt; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .pa-bar-val   { min-width:55pt; font-weight:700; color:#7b0707; }
+
+  /* ── weekly summary table ── */
+  .pa-wtbl { width:100%; font-size:8.5pt; border-collapse:collapse; margin-top:8pt; }
+  .pa-wtbl td { padding:3pt 0; }
+  .pa-wtbl td:first-child { color:#666; width:55%; }
+  .pa-wtbl td:last-child  { font-weight:700; }
+
+  /* ── audit footer ── */
+  .pa-footer { margin-top:14pt; border-top:1pt solid #eee; padding-top:6pt;
+    font-size:7.5pt; color:#999; text-align:center; }
+  .pa-footer strong { color:#7b0707; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══ HEADER ══ -->
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="logo">TU</div>
+    <div class="hdr-text">
+      <h1>Course Workload Estimator</h1>
+      <p>Office of Distance Education &amp; Online Learning (ODEOL) &nbsp;·&nbsp; Time-on-Task Calculator</p>
+    </div>
+  </div>
+  <div class="hdr-strip">
+    <span>Tuskegee University</span>
+    <span>Quality Matters Aligned</span>
+    <span>Federal Credit Hour Compliance</span>
+    <span>Carnegie Unit Standard</span>
+    <span><a href="https://www.tuskegee.edu" style="color:rgba(255,255,255,.65)">www.tuskegee.edu</a></span>
+  </div>
+</header>
+
+<!-- ══ BODY ══ -->
+<div class="body">
+  <div class="info">
+    <strong>Carnegie Unit Standard:</strong> Regardless of delivery mode, students should spend <strong>3 hours per week per credit hour</strong> across the full term, including all instructional and out-of-class activity time. A 3-credit, 15-week course requires approximately <strong>135 total student engagement hours</strong>. Condensed terms require more hours per week to reach the same total. This calculator supports ODEOL compliance documentation, Quality Matters review, and federal credit hour regulations (34 C.F.R. § 600.2).
+  </div>
+
+  <!-- Course Info -->
+  <div class="sh">Course Information</div>
+  <div class="cgrid">
+    <div class="f"><label>Instructor Name</label><input type="text" id="ci-name" placeholder="Dr. / Ms. / Mr. …"></div>
+    <div class="f"><label>Course Title</label><input type="text" id="ci-title" placeholder="e.g., Introduction to Biology"></div>
+    <div class="f"><label>Course Number</label><input type="text" id="ci-num" placeholder="e.g., BIOL 2010"></div>
+    <div class="f"><label>Term / Semester</label><input type="text" id="ci-term" placeholder="e.g., Summer 2026"></div>
+    <div class="f"><label>Department / College</label><input type="text" id="ci-dept" placeholder="e.g., College of Engineering"></div>
+    <div class="f"><label>Credit Hours</label>
+      <select id="ci-cr" onchange="recalc()">
+        <option value="1">1 Credit Hour</option><option value="2">2 Credit Hours</option>
+        <option value="3" selected>3 Credit Hours</option><option value="4">4 Credit Hours</option>
+        <option value="6">6 Credit Hours</option>
+      </select>
+    </div>
+    <div class="f"><label>Course Duration</label>
+      <select id="ci-wk" onchange="recalc()">
+        <option value="5">5-Week Accelerated</option><option value="7">7-Week Condensed</option>
+        <option value="8">8-Week Summer</option><option value="10">10-Week Quarter</option>
+        <option value="15" selected>15-Week Semester</option><option value="16">16-Week Semester</option>
+      </select>
+    </div>
+    <div class="f"><label>Delivery Mode</label>
+      <select id="ci-del">
+        <option>Online (Fully Distance)</option><option>Blended / Hybrid</option><option>Face-to-Face</option>
+      </select>
+    </div>
+    <div class="f"><label>Academic Level</label>
+      <select id="ci-lvl"><option>Undergraduate</option><option>Graduate</option></select>
+    </div>
+  </div>
+
+  <!-- Activity Builder -->
+  <div class="sh">Activity Builder</div>
+  <div class="tabs">
+    <button class="tab on"  onclick="switchTab('reading',this)">Reading</button>
+    <button class="tab"     onclick="switchTab('video',this)">Video / Lecture</button>
+    <button class="tab"     onclick="switchTab('writing',this)">Writing</button>
+    <button class="tab"     onclick="switchTab('quiz',this)">Quiz / Exam</button>
+    <button class="tab"     onclick="switchTab('discussion',this)">Discussion</button>
+    <button class="tab"     onclick="switchTab('project',this)">Project / Lab</button>
+    <button class="tab"     onclick="switchTab('other',this)">Other</button>
+  </div>
+  <div id="p-reading"    class="panel on"><div id="rows-reading"></div>    <button class="addbtn" onclick="addRow('reading')">+  Add Reading Assignment</button></div>
+  <div id="p-video"      class="panel">   <div id="rows-video"></div>      <button class="addbtn" onclick="addRow('video')">+  Add Video / Lecture</button></div>
+  <div id="p-writing"    class="panel">   <div id="rows-writing"></div>    <button class="addbtn" onclick="addRow('writing')">+  Add Writing Assignment</button></div>
+  <div id="p-quiz"       class="panel">   <div id="rows-quiz"></div>       <button class="addbtn" onclick="addRow('quiz')">+  Add Quiz / Exam</button></div>
+  <div id="p-discussion" class="panel">   <div id="rows-discussion"></div> <button class="addbtn" onclick="addRow('discussion')">+  Add Discussion Activity</button></div>
+  <div id="p-project"    class="panel">   <div id="rows-project"></div>    <button class="addbtn" onclick="addRow('project')">+  Add Project / Lab</button></div>
+  <div id="p-other"      class="panel">   <div id="rows-other"></div>      <button class="addbtn" onclick="addRow('other')">+  Add Other Activity</button></div>
+
+  <!-- Results -->
+  <div class="sh" style="margin-top:26px">Results Summary</div>
+  <div class="rcard">
+    <div class="rcard-hd">Estimated Student Time-on-Task</div>
+    <div class="rcard-body">
+      <div class="mrow">
+        <div class="mc"><div class="mv" id="r-tot">0.0</div><div class="ml">Total Hours Estimated</div></div>
+        <div class="mc"><div class="mv" id="r-req">135</div><div class="ml">Hours Required (Carnegie)</div></div>
+        <div class="mc"><div class="mv" id="r-pct">—</div><div class="ml">% of Carnegie Standard</div></div>
+      </div>
+      <div class="gt"><div class="gf" id="r-gf" style="width:0%;background:#ccc"></div></div>
+      <div class="gtx"><span>0 hrs</span><span id="g-mid">135 hrs (required)</span><span id="g-max">200 hrs</span></div>
+      <div class="st st-idle" id="r-st">Add activities above to begin calculating your course workload.</div>
+      <div id="r-bd"></div>
+      <div class="wbox">
+        <div class="wlbl">Weekly workload at a glance:</div>
+        <div class="wr"><span>Carnegie standard (this term)</span><span class="wv" id="w-std">9.0 hrs/wk</span></div>
+        <div class="wr"><span>Your course estimate</span><span class="wv" id="w-est">— hrs/wk</span></div>
+        <div class="wr"><span>Difference</span><span class="wv" id="w-dif">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print / Download -->
+  <div class="dlwrap">
+    <button class="dlbtn" onclick="printAudit()">
+      <svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+      Print / Save Audit Report as PDF
+    </button>
+    <div class="dlsub">Opens the browser print dialog — choose "Save as PDF" to download a branded audit report.<br>Works in Chrome, Firefox, Safari, and Edge. No external software required.</div>
+  </div>
+</div><!-- /body -->
+
+<footer class="ftr">
+  Tuskegee University &nbsp;·&nbsp; Office of Distance Education &amp; Online Learning (ODEOL)<br>
+  <a href="https://www.tuskegee.edu">www.tuskegee.edu</a> &nbsp;·&nbsp;
+  Based on Carnegie Unit standards and the Rice University / Wake Forest Course Workload Estimator research (Barre &amp; Esarey, 2016).
+</footer>
+</div><!-- /wrap -->
+
+<!-- ══ PRINT AUDIT SHEET (hidden on screen, shown when printing) ══ -->
+<div id="print-audit">
+  <div class="pa-body">
+    <!-- filled by buildAuditDOM() before window.print() -->
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   RATES
+══════════════════════════════════════════════════════ */
+const RR  = { survey:{dense:500,normal:400,sparse:350}, understand:{dense:200,normal:250,sparse:300}, engage:{dense:100,normal:150,sparse:200} };
+const WPP = { dense:500, normal:350, sparse:250 };
+const WM  = { reflection:45, argument:62, research:90, technical:75 };
+const TYPES = ['reading','video','writing','quiz','discussion','project','other'];
+const TLBLS = { reading:'Reading', video:'Video / Lecture', writing:'Writing', quiz:'Quiz / Exam', discussion:'Discussion', project:'Project / Lab', other:'Other' };
+const NM    = { reading:'Reading', video:'Video/Lecture', writing:'Writing', quiz:'Quiz/Exam', discussion:'Discussion', project:'Project/Lab', other:'Activity' };
+let rc = 0;
+
+/* ── tabs ── */
+function switchTab(t, btn) {
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('p-'+t).classList.add('on');
+}
+
+/* ── add / delete rows ── */
+function addRow(type) {
+  rc++;
+  const id='a'+rc, el=document.createElement('div');
+  el.className='ac'; el.id=id;
+  el.innerHTML=mkCard(type,id,rc);
+  document.getElementById('rows-'+type).appendChild(el);
+  recalc();
+}
+function delRow(id){ const e=document.getElementById(id); if(e)e.remove(); recalc(); }
+
+function mkCard(type,id,n){
+  let flds='';
+  if(type==='reading') flds=`
+    <div class="f"><label>Pages</label><input type="number" min="1" value="20" id="${id}-a" oninput="recalc()"></div>
+    <div class="f"><label>Page density</label><select id="${id}-b" onchange="recalc()"><option value="dense">Dense</option><option value="normal" selected>Normal</option><option value="sparse">Sparse</option></select></div>
+    <div class="f"><label>Reading purpose</label><select id="${id}-c" onchange="recalc()"><option value="survey">Survey / Skim</option><option value="understand" selected>Comprehension</option><option value="engage">Close / Analytical</option></select></div>
+    <div class="f"><label>Weeks repeated</label><input type="number" min="1" value="1" id="${id}-d" oninput="recalc()"></div>`;
+  else if(type==='video') flds=`
+    <div class="f"><label>Duration (min)</label><input type="number" min="1" value="20" id="${id}-a" oninput="recalc()"></div>
+    <div class="f"><label>Format</label><select id="${id}-b" onchange="recalc()"><option value="1">Recorded lecture</option><option value="1.25">Interactive video</option><option value="1.5">Live webinar</option><option value="0.9">Podcast / audio</option></select></div>
+    <div class="f"><label>Weeks repeated</label><input type="number" min="1" value="1" id="${id}-d" oninput="recalc()"></div>`;
+  else if(type==='writing') flds=`
+    <div class="f"><label>Pages</label><input type="number" min="0.5" step="0.5" value="3" id="${id}-a" oninput="recalc()"></div>
+    <div class="f"><label>Genre</label><select id="${id}-b" onchange="recalc()"><option value="reflection">Reflection / Journal</option><option value="argument" selected>Argument / Essay</option><option value="research">Research Paper</option><option value="technical">Technical / Lab Report</option></select></div>
+    <div class="f"><label>Drafting level</label><select id="${id}-c" onchange="recalc()"><option value="1.0">Single draft</option><option value="1.4" selected>Draft + revision</option><option value="1.8">Multiple revisions</option></select></div>
+    <div class="f"><label>Weeks repeated</label><input type="number" min="1" value="1" id="${id}-d" oninput="recalc()"></div>`;
+  else if(type==='quiz') flds=`
+    <div class="f"><label>Questions (#)</label><input type="number" min="1" value="20" id="${id}-a" oninput="recalc()"></div>
+    <div class="f"><label>Question type</label><select id="${id}-b" onchange="recalc()"><option value="1.5">Multiple Choice</option><option value="3">Short Answer</option><option value="7">Essay / Long Answer</option></select></div>
+    <div class="f"><label>Study time (hrs)</label><input type="number" min="0" step="0.5" value="2" id="${id}-c" oninput="recalc()"></div>
+    <div class="f"><label>Occurrences</label><input type="number" min="1" value="1" id="${id}-d" oninput="recalc()"></div>`;
+  else if(type==='discussion') flds=`
+    <div class="f"><label>Initial post</label><select id="${id}-a" onchange="recalc()"><option value="0.25">Short (~100 words)</option><option value="0.5" selected>Medium (~250 words)</option><option value="1.0">Long (~500 words)</option></select></div>
+    <div class="f"><label>Peer responses</label><input type="number" min="0" value="2" id="${id}-b" oninput="recalc()"></div>
+    <div class="f"><label>Weeks repeated</label><input type="number" min="1" value="1" id="${id}-d" oninput="recalc()"></div>`;
+  else if(type==='project') flds=`
+    <div class="f"><label>Estimated hrs (total)</label><input type="number" min="0.5" step="0.5" value="5" id="${id}-a" oninput="recalc()"></div>
+    <div class="f"><label>Project type</label><select id="${id}-b"><option>Lab Report</option><option>Group Project</option><option>Case Study</option><option>Presentation</option><option>Portfolio</option></select></div>
+    <div class="f"><label>Occurrences</label><input type="number" min="1" value="1" id="${id}-d" oninput="recalc()"></div>`;
+  else flds=`
+    <div class="f"><label>Description</label><input type="text" value="Custom activity" id="${id}-a" style="min-width:130px"></div>
+    <div class="f"><label>Hours (each)</label><input type="number" min="0.1" step="0.1" value="1" id="${id}-b" oninput="recalc()"></div>
+    <div class="f"><label>Occurrences</label><input type="number" min="1" value="1" id="${id}-d" oninput="recalc()"></div>`;
+  return `<div class="ac-hd"><span class="ac-title">${NM[type]} ${n}</span><button class="xbtn" onclick="delRow('${id}')" title="Remove">&#x2715;</button></div>
+<div class="aff">${flds}</div>
+<div class="ac-est">Estimated: <strong id="${id}-e">0.0 hrs</strong></div>`;
+}
+
+/* ── helpers ── */
+function gv(id){ const e=document.getElementById(id); return e?e.value:''; }
+function gn(id,d=0){ const v=parseFloat(gv(id)); return isNaN(v)?d:v; }
+function typeOf(el){ for(const t of TYPES){ const p=document.getElementById('p-'+t); if(p&&p.contains(el))return t; } return null; }
+
+function estCard(id,type){
+  try{
+    if(type==='reading')    return (gn(id+'-a',20)*WPP[gv(id+'-b')||'normal'])/(RR[gv(id+'-c')||'understand'][gv(id+'-b')||'normal']*60)*gn(id+'-d',1);
+    if(type==='video')      return (gn(id+'-a',20)/60)*parseFloat(gv(id+'-b')||1)*gn(id+'-d',1);
+    if(type==='writing')    return (gn(id+'-a',3)*WM[gv(id+'-b')||'argument']*parseFloat(gv(id+'-c')||1.4)/60)*gn(id+'-d',1);
+    if(type==='quiz')       return ((gn(id+'-a',20)*parseFloat(gv(id+'-b')||1.5)/60)+gn(id+'-c',2))*gn(id+'-d',1);
+    if(type==='discussion') return (parseFloat(gv(id+'-a')||0.5)+gn(id+'-b',2)*0.25)*gn(id+'-d',1);
+    if(type==='project')    return gn(id+'-a',5)*gn(id+'-d',1);
+    if(type==='other')      return gn(id+'-b',1)*gn(id+'-d',1);
+  }catch(e){}
+  return 0;
+}
+
+/* ── recalc ── */
+function recalc(){
+  const cr=parseInt(gv('ci-cr')||3), wk=parseInt(gv('ci-wk')||15);
+  const reqT=cr*45, reqW=reqT/wk;
+
+  document.getElementById('r-req').textContent=reqT;
+  document.getElementById('g-mid').textContent=reqT+' hrs (required)';
+  document.getElementById('g-max').textContent=Math.round(reqT*1.5)+' hrs';
+  document.getElementById('w-std').textContent=reqW.toFixed(1)+' hrs/wk';
+
+  const tt={};
+  let grand=0;
+  document.querySelectorAll('.ac').forEach(card=>{
+    const id=card.id; if(!id) return;
+    const t=typeOf(card); if(!t) return;
+    const v=estCard(id,t);
+    const ee=document.getElementById(id+'-e'); if(ee) ee.textContent=v.toFixed(1)+' hrs';
+    tt[t]=(tt[t]||0)+v; grand+=v;
+  });
+
+  document.getElementById('r-tot').textContent=grand.toFixed(1);
+  const pct=reqT>0?Math.round(grand/reqT*100):0;
+  document.getElementById('r-pct').textContent=grand>0?pct+'%':'—';
+
+  const gf=document.getElementById('r-gf');
+  gf.style.width=Math.min(grand/(reqT*1.5)*100,100)+'%';
+  gf.style.background=grand===0?'#ccc':pct<80?'#c0392b':pct<=120?'#27ae60':'#e67e22';
+
+  const sb=document.getElementById('r-st');
+  if(grand===0){ sb.className='st st-idle'; sb.textContent='Add activities above to begin calculating your course workload.'; }
+  else if(pct<80){ sb.className='st st-lo'; sb.textContent=`Under-loaded: ${grand.toFixed(1)} hrs (${pct}% of the ${reqT}-hr Carnegie requirement). Consider adding additional activities to meet federal compliance expectations.`; }
+  else if(pct<=120){ sb.className='st st-ok'; sb.textContent=`On target: ${grand.toFixed(1)} hrs (${pct}% of Carnegie standard). Your course workload is appropriately calibrated for a ${cr}-credit, ${wk}-week course.`; }
+  else{ sb.className='st st-hi'; sb.textContent=`Over-loaded: ${grand.toFixed(1)} hrs (${pct}% of Carnegie standard). This may place excessive demands on students. Consider redistributing or reducing activities.`; }
+
+  const bd=document.getElementById('r-bd');
+  if(grand===0){ bd.innerHTML=''; }
+  else{
+    let h='<div class="bd-lbl">Activity breakdown:</div>';
+    for(const t of TYPES){
+      const v=tt[t]||0; if(!v) continue;
+      h+=`<div class="bdr-row"><span class="bdr-nm">${TLBLS[t]}</span><div class="bdr-tw"><div class="bdr-bf" style="width:${Math.min(v/grand*100,100).toFixed(1)}%"></div></div><span class="bdr-vl">${v.toFixed(1)} hrs</span></div>`;
+    }
+    bd.innerHTML=h;
+  }
+
+  const we=wk>0?(grand/wk):0, dif=we-reqW;
+  document.getElementById('w-est').textContent=grand>0?we.toFixed(1)+' hrs/wk':'— hrs/wk';
+  const de=document.getElementById('w-dif');
+  if(grand===0){ de.textContent='—'; de.style.color=''; }
+  else{ de.textContent=(dif>=0?'+':'')+dif.toFixed(1)+' hrs/wk'; de.style.color=Math.abs(dif)<1.5?'#155724':dif>0?'#7a4a00':'#7a1414'; }
+
+  return {cr,wk,reqT,reqW,grand,pct,tt,we,dif};
+}
+
+/* ── snapshot ── */
+function snapshot(){
+  const s=recalc();
+  const rows=[];
+  document.querySelectorAll('.ac').forEach(card=>{
+    const id=card.id; if(!id) return;
+    const t=typeOf(card); if(!t) return;
+    const est=estCard(id,t);
+    let desc='';
+    if(t==='reading')     desc=`${gn(id+'-a',20)} pages · ${gv(id+'-c')||'understand'} · ${gv(id+'-b')||'normal'} density · ×${gn(id+'-d',1)} wk`;
+    else if(t==='video'){ const fmtMap={'1':'Recorded','1.25':'Interactive','1.5':'Live webinar','0.9':'Podcast'}; desc=`${gn(id+'-a',20)} min · ${fmtMap[gv(id+'-b')]||'Recorded'} · ×${gn(id+'-d',1)} wk`; }
+    else if(t==='writing')desc=`${gn(id+'-a',3)} pages · ${gv(id+'-b')||'argument'} · ×${gn(id+'-d',1)} wk`;
+    else if(t==='quiz')   desc=`${gn(id+'-a',20)} questions · study ${gn(id+'-c',2)} hrs · ×${gn(id+'-d',1)}`;
+    else if(t==='discussion')desc=`${gv(id+'-a')||'0.5'} hrs post · ${gn(id+'-b',2)} responses · ×${gn(id+'-d',1)} wk`;
+    else if(t==='project')desc=`${gn(id+'-a',5)} hrs · ×${gn(id+'-d',1)}`;
+    else desc=`${gn(id+'-b',1)} hrs · ×${gn(id+'-d',1)}`;
+    rows.push({t,label:TLBLS[t],desc,est});
+  });
+  return {...s,
+    rows,
+    name:  gv('ci-name')||'Not provided',
+    title: gv('ci-title')||'Not provided',
+    num:   gv('ci-num')||'Not provided',
+    term:  gv('ci-term')||'Not provided',
+    dept:  gv('ci-dept')||'Not provided',
+    del:   gv('ci-del')||'Online (Fully Distance)',
+    lvl:   gv('ci-lvl')||'Undergraduate',
+    date:  new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})
+  };
+}
+
+/* ══════════════════════════════════════════════════════
+   BUILD PRINT DOM + TRIGGER PRINT
+══════════════════════════════════════════════════════ */
+function printAudit(){
+  const D=snapshot();
+  const stClass = D.grand===0?'idle': D.pct<80?'lo': D.pct<=120?'ok':'hi';
+  const stLabel = D.grand===0?'Not Calculated': D.pct<80?'UNDER-LOADED': D.pct<=120?'ON TARGET':'OVER-LOADED';
+  const gaugePct= D.reqT>0?Math.min(D.grand/(D.reqT*1.5)*100,100).toFixed(1):0;
+  const gaugeColor= D.grand===0?'#ccc': D.pct<80?'#c0392b': D.pct<=120?'#27ae60':'#e67e22';
+  const maxBar=Math.max(D.reqW,D.we||0.01);
+
+  /* ── activity table rows ── */
+  let actRows='';
+  D.rows.forEach((r,i)=>{
+    actRows+=`<tr>
+      <td style="color:#555;font-weight:700">${i+1}</td>
+      <td><strong style="color:#7b0707">${r.label}</strong><br><span style="color:#666;font-size:8pt">${r.desc}</span></td>
+      <td>${r.est.toFixed(1)} hrs</td>
+    </tr>`;
+  });
+  if(!actRows) actRows='<tr><td colspan="3" style="color:#999;font-style:italic">No activities entered.</td></tr>';
+
+  /* ── weekly bar chart ── */
+  const reqBarPct=(D.reqW/maxBar*100).toFixed(1);
+  const estBarPct=(D.we/maxBar*100).toFixed(1);
+  const estBarColor= D.grand===0?'#ccc': D.pct<80?'#c0392b': D.pct<=120?'#27ae60':'#e67e22';
+
+  const html=`
+<div class="pa-hdr">
+  <div class="pa-hdr-inner">
+    <div class="pa-logo">TU</div>
+    <div>
+      <h1>Course Workload Audit Report</h1>
+      <p>Office of Distance Education &amp; Online Learning (ODEOL) &nbsp;·&nbsp; Tuskegee University &nbsp;·&nbsp; www.tuskegee.edu</p>
+      <p style="font-size:7pt;color:rgba(255,255,255,.6)">Quality Matters Aligned &nbsp;·&nbsp; Carnegie Unit Compliance &nbsp;·&nbsp; 34 C.F.R. § 600.2 &nbsp;·&nbsp; Generated: ${D.date}</p>
+    </div>
+  </div>
+</div>
+<div class="pa-gold-bar"></div>
+
+<div class="pa-sh">1. Course Information</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2pt 20pt">
+  <div class="pa-kv"><span class="k">Instructor:</span><span class="v">${D.name}</span></div>
+  <div class="pa-kv"><span class="k">Term / Semester:</span><span class="v">${D.term}</span></div>
+  <div class="pa-kv"><span class="k">Course Title:</span><span class="v">${D.title}</span></div>
+  <div class="pa-kv"><span class="k">Department / College:</span><span class="v">${D.dept}</span></div>
+  <div class="pa-kv"><span class="k">Course Number:</span><span class="v">${D.num}</span></div>
+  <div class="pa-kv"><span class="k">Delivery Mode:</span><span class="v">${D.del}</span></div>
+  <div class="pa-kv"><span class="k">Credit Hours:</span><span class="v">${D.cr} credit hour(s)</span></div>
+  <div class="pa-kv"><span class="k">Academic Level:</span><span class="v">${D.lvl}</span></div>
+  <div class="pa-kv"><span class="k">Course Duration:</span><span class="v">${D.wk} weeks</span></div>
+</div>
+
+<div class="pa-sh">2. Carnegie Unit Compliance Status</div>
+<div class="pa-compliance ${stClass}">
+  <div class="status-lbl">Compliance Status: ${stLabel}</div>
+  <div class="status-detail">
+    Estimated total: <strong>${D.grand.toFixed(1)} hrs</strong> &nbsp;·&nbsp;
+    Required (Carnegie): <strong>${D.reqT} hrs</strong> &nbsp;·&nbsp;
+    Coverage: <strong>${D.grand>0?D.pct+'%':'—'}</strong><br>
+    Weekly estimate: <strong>${D.grand>0?D.we.toFixed(1):'—'} hrs/wk</strong> &nbsp;·&nbsp;
+    Carnegie weekly standard (${D.wk}-wk term): <strong>${D.reqW.toFixed(1)} hrs/wk</strong>
+  </div>
+  <div class="pa-gauge-wrap">
+    <div class="pa-gauge-track">
+      <div class="pa-gauge-fill" style="width:${gaugePct}%;background:${gaugeColor}"></div>
+    </div>
+    <div class="pa-gauge-ticks">
+      <span>0 hrs</span><span>${D.reqT} hrs (required)</span><span>${Math.round(D.reqT*1.5)} hrs</span>
+    </div>
+  </div>
+</div>
+
+<div class="pa-sh">3. Full Activity List with Estimated Hours</div>
+<table class="pa-table">
+  <thead><tr><th style="width:20pt">#</th><th>Activity &amp; Parameters</th><th style="width:55pt">Est. Hrs</th></tr></thead>
+  <tbody>${actRows}</tbody>
+  <tfoot><tr><td colspan="2">Total Estimated Hours</td><td>${D.grand.toFixed(1)} hrs</td></tr></tfoot>
+</table>
+
+<div class="pa-sh">4. Weekly Workload Distribution</div>
+<div class="pa-bar-row">
+  <span class="pa-bar-lbl">Carnegie Required</span>
+  <div class="pa-bar-track"><div class="pa-bar-fill" style="width:${reqBarPct}%;background:#7b0707"></div></div>
+  <span class="pa-bar-val">${D.reqW.toFixed(1)} hrs/wk</span>
+</div>
+<div class="pa-bar-row">
+  <span class="pa-bar-lbl">Your Course Estimate</span>
+  <div class="pa-bar-track"><div class="pa-bar-fill" style="width:${estBarPct}%;background:${estBarColor}"></div></div>
+  <span class="pa-bar-val">${D.grand>0?D.we.toFixed(1):'0.0'} hrs/wk</span>
+</div>
+<table class="pa-wtbl">
+  <tr><td>Carnegie standard (${D.wk}-week term)</td><td>${D.reqW.toFixed(1)} hrs/wk</td></tr>
+  <tr><td>Your course estimate (weekly)</td><td>${D.grand>0?D.we.toFixed(1):'—'} hrs/wk</td></tr>
+  <tr><td>Total hours required</td><td>${D.reqT} hrs</td></tr>
+  <tr><td>Total hours estimated</td><td>${D.grand.toFixed(1)} hrs</td></tr>
+  <tr><td>Weekly variance from Carnegie</td><td>${D.grand>0?((D.we-D.reqW>=0?'+':'')+(D.we-D.reqW).toFixed(1)+' hrs/wk'):'—'}</td></tr>
+</table>
+
+<div class="pa-footer">
+  <strong>Tuskegee University</strong> &nbsp;·&nbsp; Office of Distance Education &amp; Online Learning (ODEOL) &nbsp;·&nbsp; www.tuskegee.edu<br>
+  Time estimates based on Carnegie Unit standards and the Rice University / Wake Forest Course Workload Estimator research (Barre &amp; Esarey, 2016).
+</div>`;
+
+  document.querySelector('#print-audit .pa-body').innerHTML=html;
+  window.print();
+}
+
+recalc();
+</script>
+</body>
+</html>
