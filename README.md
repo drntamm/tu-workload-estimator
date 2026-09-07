@@ -1,84 +1,67 @@
-# TU ODEOL Course Workload Estimator
+# TU OTI Course Workload Estimator
 
-**Tuskegee University — Office of Distance Education & Online Learning (ODEOL)**
+**Tuskegee University — Office of Teaching and Innovation (OTI)**
 
-A Carnegie Unit-compliant, browser-based Time-on-Task calculator for faculty developing online, blended, and face-to-face courses. Generates a branded print-to-PDF audit report for ODEOL records and Quality Matters review.
+A browser-based student time-on-task calculator for faculty developing online, blended, and face-to-face courses. The estimator supports OTI course design, Certificate for Teaching Online (CTO) faculty development, credit-hour/workload planning, and Distance Learning course quality review.
 
----
+## Live Tool
 
-## Live URL (once deployed)
-
-```
 https://drntamm.github.io/tu-workload-estimator/
-```
 
----
+## Current Workload Baseline
+
+The estimator uses approximately **3 hours of total student engagement per week per credit hour** across a standard 15-week term. This corresponds to approximately **45 total engagement hours per credit hour**. A 3-credit course therefore represents approximately **135 total engagement hours**.
+
+Accelerated courses retain the comparable total engagement expectation but distribute those hours across fewer instructional weeks. For example, a 3-credit course is approximately 9 hours/week over 15 weeks and approximately 18 hours/week over 7.5 weeks.
 
 ## Features
 
-- Seven activity types: Reading, Video/Lecture, Writing, Quiz/Exam, Discussion, Project/Lab, Other
-- Research-based time estimates (Rice University / Wake Forest Workload Estimator, Barre & Esarey, 2016)
-- Live Carnegie Unit compliance gauge — adjusts dynamically by credit hours **and** term length
-- One-click **Print / Save Audit Report** — opens browser print dialog; save as PDF
-- Zero external dependencies — no CDN, no libraries, no backend
-- Works in GitHub Pages, Canvas LMS embed, and all modern browsers
+- Course information profile: instructor, course, term, academic unit, credit hours, duration, delivery mode, and level
+- Activity builder for Reading, Video/Lecture, Writing, Quiz, Proctored Exam, Practice/Tutorial, Discussion, Project/Lab, and Other activities
+- Dynamic total and weekly workload estimates
+- Comparison with the applicable credit-hour/time-on-task baseline
+- Activity-level workload breakdown
+- Print / Save Audit Report as PDF
+- Responsive interface for desktop and mobile use
+- Suitable for use as a linked tool from Canvas
 
----
+## OTI Uses
 
-## File Structure
+The estimator is intended to support:
 
-```
-tu-workload-estimator/
-├── index.html          ← The complete application
-├── canvas-embed.html   ← Paste into Canvas HTML editor
-└── README.md           ← This file
-```
-
----
-
-## Deployment
-
-### Step 1 — GitHub Pages
-
-1. Go to github.com and sign in as **drntamm**
-2. Click **New repository** → name it exactly: `tu-workload-estimator`
-3. Set visibility to **Public**
-4. Click **Create repository**
-5. Click **uploading an existing file** → drag and drop all three files
-6. Click **Commit changes**
-7. Go to **Settings → Pages**
-8. Under **Source**: select `Deploy from a branch` → `main` → `/ (root)` → **Save**
-9. Live at: `https://drntamm.github.io/tu-workload-estimator/`
-
----
-
-### Step 2 — Canvas LMS Embed
-
-1. Open the Canvas Page where you want the tool
-2. Click **Edit** → click the **HTML Editor** button (`< >`)
-3. Paste the entire contents of `canvas-embed.html` into the editor
-4. Click **Save**
-
-The page will show a branded banner, a launch button, and an inline iframe with the full tool.
-
-> If Canvas restricts iframes on your instance, the launch button (opens in new tab) always works as a fallback.
-
----
+1. **CTO faculty development** — introducing workload planning during online-teaching preparation.
+2. **Instructional design** — helping faculty evaluate pacing and the balance of learning activities.
+3. **New course development and major revisions** — documenting planned student engagement.
+4. **DL course quality/readiness review** — providing workload evidence when requested.
+5. **Accelerated-course planning** — translating total course workload into the appropriate weekly expectation.
 
 ## Estimation Methodology
 
 | Activity | Basis |
 |---|---|
-| Reading | Words per minute by page density × reading purpose |
-| Video / Lecture | Direct duration × format multiplier |
-| Writing | Minutes per page by genre × drafting level (Torrance, 2013) |
-| Quiz / Exam | Minutes per question type + study time |
-| Discussion | Post length + peer response time |
+| Reading | Pages, page density, and reading purpose |
+| Video / Lecture | Duration and format multiplier |
+| Writing | Pages, genre, and drafting level |
+| Quiz | Question types plus study time |
+| Proctored Exam | Question types plus study time |
+| Practice / Tutorial | Faculty-entered activity duration |
+| Discussion | Initial-post estimate plus peer responses |
 | Project / Lab | Faculty-estimated hours |
-| Other | Free-form faculty estimate |
+| Other | Faculty-entered estimate |
 
-Weekly Carnegie standard = (Credit Hours × 45) ÷ Term Weeks
+Baseline calculation:
 
----
+`Total baseline hours = Credit Hours × 45`
 
-*Tuskegee University is accredited by SACSCOC. www.tuskegee.edu*
+`Weekly baseline = Total baseline hours ÷ Course Weeks`
+
+## Important Use Note
+
+The estimator provides an evidence-informed planning estimate based on faculty-entered information. It does not replace faculty academic judgment, curriculum approval, institutional policy, accreditation requirements, accessibility requirements, or OTI course-quality review.
+
+## Ownership
+
+**Program Owner:** Office of Teaching and Innovation (OTI), Tuskegee University  
+**Designed by:** Moses Ntam, Ph.D., Director for Teaching and Innovation  
+**Status:** Current OTI operational tool  
+**Review Cycle:** Annual or when institutional, federal, accreditation, or OTI course-design requirements change
